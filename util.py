@@ -1,32 +1,42 @@
-import pymssql
+import pyodbc
 
+def connect_to_db():
+    # 定义连接字符串，包括服务器名、数据库名、用户名和密码
+    conn_str = (
+        'DRIVER={SQL Server};'
+        'SERVER=your_server_name;'  # 替换为你的服务器名
+        'DATABASE=StudentManagementSystem;'
+        'UID=your_username;'        # 替换为你的用户名
+        'PWD=your_password'         # 替换为你的密码
+    )
+    # 建立连接
+    conn = pyodbc.connect(conn_str)
+    return conn
 
-server = 'localhost'  # 使用配置文件中的服务器名称
-username = 'sa'  # 使用你的 Windows 用户名
-password = '123456'  # 如果不需要密码则留空
+def add_student(name, gender, admission_year, hometown, major, class_name):
+    conn = connect_to_db()  # 连接到数据库
+    cursor = conn.cursor()  # 创建游标
+    # 执行插入语句
+    cursor.execute("""
+        INSERT INTO Students (name, gender, admission_year, hometown, major, class_name)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (name, gender, admission_year, hometown, major, class_name))
+    conn.commit()  # 提交事务
+    conn.close()   # 关闭连接
 
+def query_students():
+    conn = connect_to_db()  # 连接到数据库
+    cursor = conn.cursor()  # 创建游标
+    # 执行查询语句
+    cursor.execute("SELECT * FROM Students")
+    rows = cursor.fetchall()  # 获取所有行
+    conn.close()  # 关闭连接
+    return rows  # 返回查询结果
 
-# 连接数据库
-def connect_db():
-    # 连接数据库，如果失败抛出pymssql.OperationalError异常
-
-    database_name='library'
-    # 创建连接
-    try:
-        conn = pymssql.connect(server=server, user=username, password=password, database=database_name)
-    except pymssql.OperationalError as e:  # 有异常执行
-        print(f"Connection failed: {e}")
-        raise  # 抛出捕获到的异常
-    else:  # 没有异常执行
-        print(f"数据库{database_name}已连接！")
-        return conn
-
-#关闭数据库，如果失败则打印提示
-def connect_close(conn):
-    # 关闭连接
-    try:
-        if conn:
-            conn.close()
-            print("连接已关闭")
-    except Exception as e:
-        print(f"关闭连接时发生错误: {e}")
+def delete_student(student_id):
+    conn = connect_to_db()  # 连接到数据库
+    cursor = conn.cursor()  # 创建游标
+    # 执行删除语句
+    cursor.execute("DELETE FROM Students WHERE student_id = ?", (student_id,))
+    conn.commit()  # 提交事务
+    conn.close()   # 关闭连接
